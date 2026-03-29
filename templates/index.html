@@ -391,8 +391,13 @@
                 localStorage.setItem('tex_content', val);
                 
                 // Heuristics to recover unescaped math brackets
-                // 1. Math block [ ... ] on its own line -> $$ ... $$
+                // 1a. Math block [ ... ] on its own line -> $$ ... $$
                 let processedVal = val.replace(/^[ \t]*\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\][ \t]*$/gm, '$$$$$1$$$$');
+                // 1b. Multi-line ChatGPT bracket format:
+                // [
+                // f(x) = ...
+                // ]
+                processedVal = processedVal.replace(/^[ \t]*\[[ \t]*\n([^\[\]]+?)\n[ \t]*\][ \t]*$/gm, '$$$$$1$$$$');
                 // 2. Double parentheses: ((C_f)) -> \(C_f\)
                 processedVal = processedVal.replace(/\(\((.*?)\)\)/g, '\\($1\\)');
                 // 3. Remove AI citation markers like [cite_start] or [cite: 5, 6]
