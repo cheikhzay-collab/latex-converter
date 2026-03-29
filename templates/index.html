@@ -340,7 +340,7 @@
             </div>
         </div>
 
-        <form id="convertForm">
+        <form id="convertForm" action="/convert" method="POST">
             <div class="controls-bar">
                 <label class="rtl-toggle">
                     <input type="checkbox" id="rtlCheck" name="is_rtl">
@@ -487,52 +487,25 @@
             }
         });
 
-        // Form Submission with download handling
-        document.getElementById('convertForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            const originalContent = btn.innerHTML;
-            
+        // Form Submission visual feedback for Native Download
+        document.getElementById('convertForm').addEventListener('submit', (e) => {
             if(!editor.value.trim()) {
+                e.preventDefault();
                 showToast("⚠️ Please enter some LaTeX code first.");
                 return;
             }
 
+            const btn = document.getElementById('submitBtn');
+            const originalContent = btn.innerHTML;
             btn.innerHTML = '<span class="spinner"></span> Converting...';
             btn.disabled = true;
 
-            try {
-                const formData = new FormData();
-                formData.append('content', editor.value);
-                formData.append('is_rtl', rtlCheck.checked ? 'on' : 'off');
-
-                const response = await fetch('/convert', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if(!response.ok) throw new Error("Server error during conversion.");
-
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "converted.doc";
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                a.remove();
-                
-                showToast("🎉 Document downloaded successfully!");
+            // Restore button after download starts
+            setTimeout(() => {
                 btn.innerHTML = originalContent;
                 btn.disabled = false;
-            } catch (err) {
-                console.error(err);
-                showToast("❌ Conversion failed: " + err.message);
-            } finally {
-                btn.innerHTML = originalContent;
-                btn.disabled = false;
-            }
+                showToast("✅ Download requested!");
+            }, 2500);
         });
 
         // PDF Export functionality using Native Print
