@@ -8,7 +8,19 @@ import markdown
 
 app = Flask(__name__)
 
+def preprocess_copied_math(text):
+    # 1. Math formulas inside brackets: [ f(x) = 3 ] -> $$ f(x) = 3 $$
+    text = re.sub(r'\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\]', r'$$\1$$', text)
+    # 2. Double parentheses: ((C_f)) -> \(C_f\)
+    text = re.sub(r'\(\((.*?)\)\)', r'\(\1\)', text)
+    # 3. Single function letter or variable: (f) -> \(f\)
+    text = re.sub(r'\(([A-Za-z])\)', r'\(\1\)', text)
+    # 4. Simple equations in parentheses: (f(x)=3)
+    text = re.sub(r'\(([A-Za-z]\([A-Za-z]\)[^()]*?)\)', r'\(\1\)', text)
+    return text
+
 def process_text_to_html(text, is_rtl=False):
+    text = preprocess_copied_math(text)
     
     # 1. Pre-processing: Identify LaTeX blocks and protect them from Markdown conversion
     # We replace math blocks with placeholders to prevent Markdown from messing them up (e.g., * in formulas)

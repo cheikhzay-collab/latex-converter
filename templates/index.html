@@ -437,11 +437,17 @@
                 charCount.innerText = val.length + ' chars';
                 localStorage.setItem('tex_content', val);
                 
+                // Heuristics to recover unescaped math brackets
+                let processedVal = val.replace(/\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\]/g, '$$$$$1$$$$');
+                processedVal = processedVal.replace(/\(\((.*?)\)\)/g, '\\($1\\)');
+                processedVal = processedVal.replace(/\(([A-Za-z])\)/g, '\\($1\\)');
+                processedVal = processedVal.replace(/\(([A-Za-z]\([A-Za-z]\)[^()]*?)\)/g, '\\($1\\)');
+                
                 // Render Markdown first then MathJax
                 if(window.marked) {
-                    preview.innerHTML = marked.parse(val);
+                    preview.innerHTML = marked.parse(processedVal);
                 } else {
-                    preview.innerText = val;
+                    preview.innerText = processedVal;
                 }
                 
                 if(window.MathJax) {
