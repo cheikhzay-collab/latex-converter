@@ -114,32 +114,6 @@
             font-size: 1.1rem;
         }
 
-        .helper-box {
-            background: var(--info-bg);
-            border: 1px solid var(--info-border);
-            border-radius: 1rem;
-            padding: 1.25rem;
-            margin-bottom: 2rem;
-        }
-
-        .flex-row {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        .helper-input {
-            flex: 1;
-            min-width: 250px;
-            padding: 0.75rem;
-            border: 1px solid var(--border-solid);
-            border-radius: 0.5rem;
-            background: var(--surface-solid);
-            color: var(--text);
-            font-family: 'Inter', monospace;
-        }
-
         .btn {
             display: inline-flex;
             align-items: center;
@@ -326,20 +300,6 @@
             <button class="theme-toggle" id="themeBtn" title="Toggle Dark Mode">🌙</button>
         </div>
 
-        <div class="helper-box">
-            <h3 style="margin-top:0; color:var(--primary); font-size: 1.1rem;">
-                💡 How to get the code? (كيف تحصل على الكود؟)
-            </h3>
-            <p style="margin: 0.5rem 0; font-size: 0.95rem;">
-                AI often hides the raw math code. Send this prompt to reveal it:<br>
-                <span dir="rtl" style="color: var(--text-muted); font-size: 0.9rem;">(انسخ هذا الأمر وأرسله للذكاء الاصطناعي ليظهر الكود المصدري)</span>
-            </p>
-            <div class="flex-row">
-                <input type="text" id="magicPrompt" value="Please output the full LaTeX source code for the previous response in a single code block without compiling it." class="helper-input" readonly>
-                <button type="button" class="btn" onclick="copyPrompt()">📋 Copy Command</button>
-            </div>
-        </div>
-
         <form id="convertForm" action="/convert" method="POST" enctype="multipart/form-data">
             <div class="controls-bar">
                 <label class="rtl-toggle">
@@ -406,13 +366,6 @@
             toast.innerText = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-
-        function copyPrompt() {
-            const copyText = document.getElementById("magicPrompt");
-            copyText.select();
-            document.execCommand("copy");
-            showToast("✅ Command copied to clipboard!");
         }
 
         // Editor logic
