@@ -1,0 +1,6 @@
+flask
+python-docx
+latex2mathml
+lxml
+gunicorn
+markdown
