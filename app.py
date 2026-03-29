@@ -9,8 +9,8 @@ import markdown
 app = Flask(__name__)
 
 def preprocess_copied_math(text):
-    # 1. Math formulas inside brackets: [ f(x) = 3 ] -> $$ f(x) = 3 $$
-    text = re.sub(r'\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\]', r'$$\1$$', text)
+    # 1. Math formulas inside brackets: [ f(x) = 3 ] -> $$ f(x) = 3 $$. MUST be on their own line to avoid breaking intervals like [1, +\infty[
+    text = re.sub(r'(?m)^[ \t]*\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\][ \t]*$', r'$$\1$$', text)
     # 2. Double parentheses: ((C_f)) -> \(C_f\)
     text = re.sub(r'\(\((.*?)\)\)', r'\(\1\)', text)
     # 3. Single function letter or variable: (f) -> \(f\)
