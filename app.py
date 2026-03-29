@@ -17,6 +17,8 @@ def preprocess_copied_math(text):
     text = re.sub(r'\(([A-Za-z])\)', r'\(\1\)', text)
     # 4. Simple equations in parentheses: (f(x)=3)
     text = re.sub(r'\(([A-Za-z]\([A-Za-z]\)[^()]*?)\)', r'\(\1\)', text)
+    # 5. Remove AI citation markers
+    text = re.sub(r'\[cite_.*?\]|\[cite:\s*\d+\]', '', text)
     return text
 
 def process_text_to_html(text, is_rtl=False):

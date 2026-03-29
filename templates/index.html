@@ -396,6 +396,8 @@
                 processedVal = processedVal.replace(/\(\((.*?)\)\)/g, '\\($1\\)');
                 processedVal = processedVal.replace(/\(([A-Za-z])\)/g, '\\($1\\)');
                 processedVal = processedVal.replace(/\(([A-Za-z]\([A-Za-z]\)[^()]*?)\)/g, '\\($1\\)');
+                // Remove AI citation markers
+                processedVal = processedVal.replace(/\[cite_.*?\]|\[cite:\s*\d+\]/g, '');
                 
                 // Render Markdown first then MathJax
                 if(window.marked) {
