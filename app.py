@@ -13,11 +13,7 @@ def preprocess_copied_math(text):
     text = re.sub(r'(?m)^[ \t]*\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\][ \t]*$', r'$$\1$$', text)
     # 2. Double parentheses: ((C_f)) -> \(C_f\)
     text = re.sub(r'\(\((.*?)\)\)', r'\(\1\)', text)
-    # 3. Single function letter or variable: (f) -> \(f\)
-    text = re.sub(r'\(([A-Za-z])\)', r'\(\1\)', text)
-    # 4. Simple equations in parentheses: (f(x)=3)
-    text = re.sub(r'\(([A-Za-z]\([A-Za-z]\)[^()]*?)\)', r'\(\1\)', text)
-    # 5. Remove AI citation markers
+    # 3. Remove AI citation markers like [cite_start] or [cite: 5, 6]
     text = re.sub(r'\[cite[_:][^\]]*\]', '', text)
     return text
 
