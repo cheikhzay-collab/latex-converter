@@ -3,282 +3,859 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Math to Word Converter - Premium</title>
-    <!-- Fonts -->
+    <title>LaTeX to Word — AI Math Converter</title>
+    <meta name="description" content="Convert AI-generated LaTeX math notation from ChatGPT and Gemini into professional, editable Word documents with native equations.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+
     <style>
+        /* ═══════════════════════════════════════════
+           DESIGN TOKENS
+           ═══════════════════════════════════════════ */
         :root {
-            --bg-gradient: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
-            --surface: rgba(255, 255, 255, 0.7);
+            --hue: 250;
+            --accent: hsl(var(--hue), 85%, 62%);
+            --accent-hover: hsl(var(--hue), 85%, 52%);
+            --accent-glow: hsla(var(--hue), 85%, 62%, 0.35);
+            --rose: hsl(335, 80%, 60%);
+            --rose-glow: hsla(335, 80%, 60%, 0.25);
+            --emerald: hsl(160, 70%, 45%);
+            --amber: hsl(38, 95%, 55%);
+
+            --bg: hsl(225, 25%, 7%);
+            --bg-subtle: hsl(225, 25%, 10%);
+            --surface: hsla(225, 30%, 14%, 0.7);
+            --surface-solid: hsl(225, 30%, 14%);
+            --surface-hover: hsl(225, 30%, 18%);
+            --text: hsl(210, 40%, 96%);
+            --text-secondary: hsl(215, 20%, 60%);
+            --text-tertiary: hsl(215, 15%, 42%);
+            --border: hsla(210, 40%, 96%, 0.08);
+            --border-active: hsla(210, 40%, 96%, 0.18);
+
+            --radius-sm: 0.5rem;
+            --radius-md: 0.875rem;
+            --radius-lg: 1.25rem;
+            --radius-xl: 1.75rem;
+            --radius-full: 9999px;
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 8px 32px rgba(0,0,0,0.3);
+            --shadow-lg: 0 24px 64px rgba(0,0,0,0.4);
+            --shadow-glow: 0 0 40px var(--accent-glow);
+
+            --font: 'Inter', 'Cairo', system-ui, sans-serif;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --speed: 0.25s;
+        }
+
+        [data-theme="light"] {
+            --bg: hsl(225, 30%, 97%);
+            --bg-subtle: hsl(225, 30%, 94%);
+            --surface: hsla(0, 0%, 100%, 0.75);
             --surface-solid: #ffffff;
-            --text: #1e293b;
-            --text-muted: #64748b;
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --border: rgba(255, 255, 255, 0.5);
-            --border-solid: #cbd5e1;
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-            --success: #10b981;
-            --info-bg: rgba(239, 246, 255, 0.8);
-            --info-border: #bfdbfe;
+            --surface-hover: hsl(225, 30%, 95%);
+            --text: hsl(225, 40%, 12%);
+            --text-secondary: hsl(215, 16%, 47%);
+            --text-tertiary: hsl(215, 12%, 65%);
+            --border: hsla(225, 40%, 12%, 0.07);
+            --border-active: hsla(225, 40%, 12%, 0.15);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 8px 32px rgba(0,0,0,0.06);
+            --shadow-lg: 0 24px 64px rgba(0,0,0,0.08);
         }
 
-        [data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            --surface: rgba(30, 41, 59, 0.7);
-            --surface-solid: #1e293b;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #6366f1;
-            --primary-hover: #818cf8;
-            --border: rgba(255, 255, 255, 0.05);
-            --border-solid: #334155;
-            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-            --info-bg: rgba(30, 58, 138, 0.3);
-            --info-border: #1e3a8a;
-        }
-
-        * {
-            box-sizing: border-box;
-            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-        }
+        /* ═══════════════════════════════════════════
+           RESET & BASE
+           ═══════════════════════════════════════════ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', 'Cairo', sans-serif;
-            background: var(--bg-gradient);
-            background-attachment: fixed;
+            font-family: var(--font);
+            background: var(--bg);
             color: var(--text);
-            line-height: 1.6;
-            margin: 0;
-            padding: 2rem 1rem;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background var(--speed) var(--ease), color var(--speed) var(--ease);
+        }
+
+        /* Animated background mesh */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 10% 0%, hsla(var(--hue), 60%, 40%, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 90% 10%, hsla(335, 60%, 40%, 0.1) 0%, transparent 60%),
+                radial-gradient(ellipse 70% 40% at 50% 100%, hsla(var(--hue), 50%, 30%, 0.08) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ═══════════════════════════════════════════
+           ANIMATIONS
+           ═══════════════════════════════════════════ */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 var(--accent-glow); }
+            70% { box-shadow: 0 0 0 12px transparent; }
+            100% { box-shadow: 0 0 0 0 transparent; }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* ═══════════════════════════════════════════
+           LAYOUT
+           ═══════════════════════════════════════════ */
+        .app {
+            position: relative;
+            z-index: 1;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
         }
 
-        .container {
-            width: 100%;
-            max-width: 1100px;
-            background: var(--surface);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-        }
-
-        .header {
+        /* ─── Top Bar ─── */
+        .topbar {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: var(--surface);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            animation: fadeIn 0.5s var(--ease) both;
         }
 
-        .theme-toggle {
-            background: var(--surface-solid);
-            border: 1px solid var(--border-solid);
-            color: var(--text);
-            font-size: 1.25rem;
-            cursor: pointer;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--rose));
+            border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            color: white;
+            font-weight: 900;
+            font-size: 1rem;
         }
-        
-        .theme-toggle:hover {
-            transform: scale(1.05);
+        .logo-text {
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+        }
+        .logo-text span {
+            color: var(--text-tertiary);
+            font-weight: 500;
         }
 
-        h1 {
-            color: var(--primary);
-            margin: 0;
-            font-size: 2.2rem;
-            font-weight: 700;
-            background: linear-gradient(to right, var(--primary), #ec4899);
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ─── Icon Buttons ─── */
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--speed) var(--ease);
+        }
+        .icon-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text);
+            border-color: var(--border-active);
+        }
+        .icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* ─── Main Content ─── */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            animation: fadeIn 0.6s var(--ease) 0.1s both;
+        }
+
+        /* ─── Hero / CTA Section ─── */
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-text h1 {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            margin-bottom: 0.5rem;
+        }
+        .hero-text h1 .gradient {
+            background: linear-gradient(135deg, var(--accent), var(--rose));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        p.subtitle {
-            color: var(--text-muted);
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
+        .hero-text p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 460px;
+            line-height: 1.6;
         }
 
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* ─── Primary CTA Button (Paste) ─── */
+        .btn-paste {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-family: var(--font);
+            color: white;
+            background: linear-gradient(135deg, var(--accent), hsl(calc(var(--hue) + 30), 75%, 55%));
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--speed) var(--ease);
+            box-shadow: 0 4px 20px var(--accent-glow), var(--shadow-md);
+            animation: pulse-ring 2.5s var(--ease) infinite;
+        }
+        .btn-paste:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 30px var(--accent-glow), var(--shadow-lg);
+        }
+        .btn-paste:active {
+            transform: translateY(0) scale(0.98);
+        }
+        .btn-paste svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        .btn-paste .kbd {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            letter-spacing: 0.03em;
+        }
+
+        /* ─── Secondary Buttons ─── */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 0.75rem;
-            font-size: 1rem;
+            gap: 0.6rem;
+            padding: 0.7rem 1.4rem;
+            font-size: 0.9rem;
             font-weight: 600;
+            font-family: var(--font);
+            border-radius: var(--radius-md);
             cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transform: translateY(0);
+            transition: all var(--speed) var(--ease);
+            border: 1px solid transparent;
+            user-select: none;
         }
+        .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-        .btn:hover:not(:disabled) {
-            background-color: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.15);
+        .btn-ghost {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text-secondary);
         }
-
-        .btn:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .btn-success { background-color: var(--success); }
-        .btn-success:hover:not(:disabled) { background-color: #059669; }
-
-        .btn-outline {
-            background-color: transparent;
+        .btn-ghost:hover {
+            background: var(--surface-hover);
             color: var(--text);
-            border: 1px solid var(--border-solid);
-            box-shadow: none;
-        }
-        .btn-outline:hover:not(:disabled) {
-            background-color: rgba(128,128,128,0.1);
-        }
-        .controls-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            border-color: var(--border-active);
         }
 
-        .rtl-toggle {
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+        .btn-accent:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px var(--accent-glow);
+        }
+
+        .btn-emerald {
+            background: var(--emerald);
+            color: white;
+            box-shadow: 0 4px 12px hsla(160, 70%, 45%, 0.3);
+        }
+        .btn-emerald:hover {
+            background: hsl(160, 70%, 38%);
+            transform: translateY(-2px);
+        }
+
+        .btn-rose {
+            background: transparent;
+            border-color: var(--rose);
+            color: var(--rose);
+        }
+        .btn-rose:hover {
+            background: var(--rose);
+            color: white;
+        }
+
+        .btn-lg {
+            padding: 1rem 2.5rem;
+            font-size: 1.05rem;
+            border-radius: var(--radius-lg);
+        }
+
+        /* ─── Options Bar ─── */
+        .options-bar {
             display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 1rem;
-            background: var(--surface-solid);
-            border: 1px solid var(--border-solid);
-            border-radius: 0.75rem;
-            cursor: pointer;
+            border-radius: var(--radius-full);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
             font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--speed) var(--ease);
             user-select: none;
         }
+        .chip:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+        .chip.active {
+            background: hsla(var(--hue), 85%, 62%, 0.12);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .chip input[type="checkbox"] {
+            display: none;
+        }
+        .chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+        .chip .check { display: none; }
+        .chip.active .check { display: inline-flex; }
+        .chip.active .uncheck { display: none; }
 
-        .workspace {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
+        .divider-v {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+        }
+
+        .info-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+        .info-tag .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--emerald);
+            animation: float 2s ease-in-out infinite;
+        }
+
+        /* ─── Preview Panel ─── */
+        .preview-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .section-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-tertiary);
+        }
+        .section-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--emerald);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .section-badge .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--emerald);
+        }
+
+        .preview-card {
+            flex: 1;
+            min-height: 400px;
+            background: var(--surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            overflow-y: auto;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            transition: all var(--speed) var(--ease);
+            box-shadow: var(--shadow-sm);
+        }
+        .preview-card:hover {
+            border-color: var(--border-active);
+        }
+        .preview-card.rtl {
+            direction: rtl;
+            text-align: right;
+        }
+        .preview-card.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
+            font-size: 0.95rem;
+        }
+        .preview-card.empty .empty-state {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .preview-card.empty .empty-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: var(--radius-lg);
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-card.empty .empty-icon svg {
+            width: 28px; height: 28px; stroke: var(--text-tertiary); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+        }
+
+        /* ─── Bottom Export Bar ─── */
+        .export-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 1.25rem 1.5rem;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            animation: fadeIn 0.6s var(--ease) 0.3s both;
+        }
+
+        .export-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+        .export-info strong {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .export-info small {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .char-count {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            letter-spacing: 0.05em;
+        }
+
+        /* ═══════════════════════════════════════════
+           PASTE MODAL (Full-screen)
+           ═══════════════════════════════════════════ */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s var(--ease);
+        }
+        .modal-backdrop.open {
+            display: block;
+            opacity: 1;
+        }
+
+        .paste-modal {
+            position: fixed;
+            inset: 1.5rem;
+            z-index: 1001;
+            background: var(--surface-solid);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            transform: translateY(30px) scale(0.96);
+            opacity: 0;
+            transition: transform 0.35s var(--ease-bounce), opacity 0.25s var(--ease);
+        }
+        .paste-modal.open {
+            display: flex;
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+
+        .modal-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .modal-topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .modal-topbar-left .modal-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, var(--accent), var(--rose));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-topbar-left .modal-icon svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .modal-topbar-title {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .modal-topbar-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .modal-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            gap: 1rem;
+            overflow: hidden;
+        }
+
+        .modal-textarea {
+            flex: 1;
+            width: 100%;
+            padding: 1.5rem;
+            font-family: 'Inter', 'Cairo', monospace;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text);
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: var(--radius-lg);
+            resize: none;
+            transition: border-color var(--speed) var(--ease), box-shadow var(--speed) var(--ease);
+        }
+        .modal-textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow);
+        }
+        .modal-textarea::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .modal-textarea.dragover {
+            border-color: var(--accent);
+            background: hsla(var(--hue), 85%, 62%, 0.05);
+        }
+
+        .modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .modal-footer-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           GUIDE MODAL
+           ═══════════════════════════════════════════ */
+        .guide-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.92);
+            z-index: 1002;
+            background: var(--surface-solid);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            max-width: 520px;
+            width: 92%;
+            padding: 2rem;
+            display: none;
+            opacity: 0;
+            transition: transform 0.35s var(--ease-bounce), opacity 0.25s var(--ease);
+        }
+        .guide-modal.open {
+            display: block;
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .guide-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 1.5rem;
         }
-        @media (min-width: 800px) {
-            .workspace { grid-template-columns: 1fr 1fr; }
+        .guide-title {
+            font-weight: 800;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, var(--accent), var(--rose));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .panel-header {
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
+        .guide-step {
             display: flex;
-            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            transition: background var(--speed) var(--ease);
         }
-
-        textarea {
-            width: 100%;
-            height: 450px;
-            padding: 1rem;
-            border: 2px solid var(--border-solid);
-            border-radius: 1rem;
-            background: var(--surface-solid);
-            color: var(--text);
-            font-family: 'Inter', monospace;
-            font-size: 0.95rem;
-            resize: vertical;
+        .guide-step:hover {
+            background: var(--surface-hover);
         }
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        textarea.dragover {
-            border-color: var(--primary);
-            border-style: dashed;
-            background: rgba(79, 70, 229, 0.05);
-        }
-
-        .preview-box {
-            height: 450px;
-            padding: 1.5rem;
-            border: 1px solid var(--border-solid);
-            border-radius: 1rem;
-            background: var(--surface-solid);
-            overflow-y: auto;
-            direction: ltr;
-        }
-        .preview-box.rtl { direction: rtl; text-align: right; }
-
-        .action-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .spinner {
-            width: 20px; height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: white;
+        .step-num {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            background: linear-gradient(135deg, var(--accent), var(--rose));
+            color: white;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .step-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+        .step-text strong {
+            color: var(--text);
+        }
 
-        /* Toast */
+        /* ═══════════════════════════════════════════
+           TOAST
+           ═══════════════════════════════════════════ */
         .toast {
             position: fixed;
             bottom: 2rem;
-            background: var(--surface-solid);
-            color: var(--text);
-            padding: 1rem 2rem;
-            border-radius: 2rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-solid);
-            transform: translateY(150%);
-            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            z-index: 1000;
-            font-weight: 600;
+            left: 50%;
+            transform: translateX(-50%) translateY(120%);
+            background: var(--text);
+            color: var(--bg);
+            padding: 0.85rem 1.75rem;
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 3000;
+            transition: transform 0.4s var(--ease-bounce);
+            white-space: nowrap;
         }
-        .toast.show { transform: translateY(0); }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
 
+        /* ═══════════════════════════════════════════
+           SPINNER
+           ═══════════════════════════════════════════ */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        /* ═══════════════════════════════════════════
+           CONTENT STATUS INDICATOR
+           ═══════════════════════════════════════════ */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: var(--radius-full);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            transition: all var(--speed) var(--ease);
+        }
+        .status-indicator.empty {
+            background: hsla(0, 0%, 50%, 0.1);
+            color: var(--text-tertiary);
+        }
+        .status-indicator.has-content {
+            background: hsla(160, 70%, 45%, 0.12);
+            color: var(--emerald);
+        }
+        .status-indicator .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .status-indicator.empty .dot { background: var(--text-tertiary); }
+        .status-indicator.has-content .dot { background: var(--emerald); animation: float 2s ease-in-out infinite; }
+
+        /* ═══════════════════════════════════════════
+           PRINT
+           ═══════════════════════════════════════════ */
         @media print {
-            body * { visibility: hidden !important; }
-            #preview, #preview * { visibility: visible !important; color: black !important; }
-            #preview {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
+            body { padding: 0 !important; background: white !important; color: black !important; }
+            body::before { display: none; }
+            .topbar, .hero, .options-bar, .export-bar, .toast, .modal-backdrop, .paste-modal, .guide-modal, .section-header { display: none !important; }
+            .main { padding: 0 !important; }
+            .preview-card {
+                display: block !important;
+                position: static !important;
                 width: 100% !important;
                 height: auto !important;
-                border: none !important;
                 overflow: visible !important;
-                padding: 1cm !important;
+                border: none !important;
+                padding: 0 !important;
                 margin: 0 !important;
-                box-shadow: none !important;
                 background: white !important;
+                color: black !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                min-height: 0 !important;
             }
-            @page { margin: 1cm; }
+        }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .main { padding: 1rem; }
+            .hero { flex-direction: column; align-items: flex-start; }
+            .hero-actions { width: 100%; }
+            .btn-paste { width: 100%; justify-content: center; }
+            .paste-modal { inset: 0.5rem; }
+            .export-bar { flex-direction: column; align-items: flex-start; }
+            .export-actions { width: 100%; }
+            .export-actions .btn { flex: 1; }
+            .topbar { padding: 0.75rem 1rem; }
         }
     </style>
-    
+
     <script>
       MathJax = {
         tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
@@ -291,76 +868,239 @@
 <body>
     <div class="toast" id="toast">Message</div>
 
-    <div class="container">
-        <div class="header">
-            <div>
-                <h1>LaTeX to Word Converter</h1>
-                <p class="subtitle">Convert AI math output to editable Word equations</p>
+    <div class="app">
+        <!-- ═══ TOP BAR ═══ -->
+        <header class="topbar" id="topbar">
+            <div class="logo">
+                <div class="logo-icon">∑</div>
+                <div>
+                    <div class="logo-text">LaTeX to Word <span>Converter</span></div>
+                </div>
             </div>
-            <button class="theme-toggle" id="themeBtn" title="Toggle Dark Mode">🌙</button>
-        </div>
+            <div class="topbar-actions">
+                <button type="button" class="icon-btn" onclick="openGuide()" title="Quick Guide">
+                    <svg><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                </button>
+                <button type="button" class="icon-btn" id="themeBtn" title="Toggle theme">
+                    <svg><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                </button>
+            </div>
+        </header>
 
-        <form id="convertForm" action="/convert" method="POST" enctype="multipart/form-data">
-            <div class="controls-bar">
-                <label class="rtl-toggle">
+        <!-- ═══ MAIN ═══ -->
+        <main class="main">
+            <!-- Hero / CTA -->
+            <div class="hero">
+                <div class="hero-text">
+                    <h1>Convert <span class="gradient">AI Math</span> to Word</h1>
+                    <p>Paste any content from ChatGPT or Gemini and export it as an editable Word document with native equations.</p>
+                </div>
+                <div class="hero-actions">
+                    <button type="button" class="btn-paste" id="openPasteBtn" onclick="openPasteModal()">
+                        <svg><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><path d="M12 11v6"/><path d="m9 14 3-3 3 3"/></svg>
+                        Paste Content
+                        <span class="kbd">Ctrl+V</span>
+                    </button>
+                    <div id="statusIndicator" class="status-indicator empty">
+                        <span class="dot"></span>
+                        <span id="statusText">No content</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Options -->
+            <div class="options-bar">
+                <label class="chip" id="rtlChip" onclick="toggleRTL()">
                     <input type="checkbox" id="rtlCheck" name="is_rtl">
-                    <span>🌍 Arabic / RTL Mode (تفعيل العربية)</span>
+                    <svg class="uncheck"><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/></svg>
+                    <svg class="check"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                    🌍 Arabic Mode (RTL)
                 </label>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button type="button" class="btn btn-outline" id="exampleBtn" onclick="fillExample()">✨ Try Example</button>
-                    <button type="button" class="btn btn-outline" id="clearBtn" onclick="clearEditor()">🗑️ Clear</button>
+                <div class="divider-v"></div>
+                <button type="button" class="chip" onclick="fillExample()">
+                    <svg><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/></svg>
+                    Try Example
+                </button>
+                <button type="button" class="chip" onclick="clearAll()">
+                    <svg><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    Clear
+                </button>
+                <div class="divider-v"></div>
+                <span class="info-tag">
+                    <span class="dot"></span>
+                    Supports ChatGPT & Gemini
+                </span>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-section">
+                <div class="section-header">
+                    <span class="section-title">Live Preview</span>
+                    <span class="section-badge" id="renderBadge"><span class="dot"></span> Rendering Active</span>
+                </div>
+                <div class="preview-card" id="preview">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>
+                        </div>
+                        <div>
+                            <strong style="display:block; margin-bottom:0.25rem;">No content yet</strong>
+                            Click <strong>"Paste Content"</strong> to get started
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="workspace">
-                <div>
-                    <div class="panel-header">
-                        <span>Input LaTeX</span>
-                        <span id="charCount" style="font-size: 0.85rem; font-weight: normal;">0 chars</span>
-                    </div>
-                    <textarea id="editor" name="content" placeholder="Paste your LaTeX code here...&#10;Drag and drop a .tex file here...&#10;(الصق الكود هنا أو اسحب الملف)"></textarea>
-                </div>
-                <div>
-                    <div class="panel-header">
-                        <span>Live Preview (معاينة)</span>
-                    </div>
-                    <div id="preview" class="preview-box"></div>
-                </div>
-            </div>
+            <!-- Export Bar -->
+            <form id="convertForm" action="/convert" method="POST">
+                <input type="hidden" id="hiddenContent" name="content" value="">
+                <input type="hidden" id="hiddenRTL" name="is_rtl" value="">
 
-            <div class="action-row" style="flex-wrap: wrap; gap: 1rem;">
-                <span class="panel-header" style="margin:0;">Files will be downloaded natively.</span>
-                <div style="display: flex; gap: 1rem;">
-                    <button type="button" class="btn" id="pdfBtn" style="padding: 1rem 2.5rem; font-size: 1.1rem; background-color: #ef4444;" onclick="exportPDF()">
-                        📕 Export to PDF
-                    </button>
-                    <button type="submit" class="btn btn-success" id="submitBtn" style="padding: 1rem 2.5rem; font-size: 1.1rem;">
-                        📄 Convert to Word (.doc)
-                    </button>
+                <div class="export-bar">
+                    <div class="export-info">
+                        <strong>Ready to Export?</strong>
+                        <small>Download in native Word (.docx) or print as PDF</small>
+                    </div>
+                    <div class="export-actions">
+                        <button type="button" class="btn btn-rose" onclick="exportPDF()">
+                            <svg><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
+                            Export PDF
+                        </button>
+                        <button type="submit" class="btn btn-accent btn-lg" id="submitBtn">
+                            <svg><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg>
+                            Generate .docx
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <!-- ═══ PASTE MODAL ═══ -->
+    <div class="modal-backdrop" id="modalBackdrop" onclick="closePasteModal()"></div>
+    <div class="paste-modal" id="pasteModal">
+        <div class="modal-topbar">
+            <div class="modal-topbar-left">
+                <div class="modal-icon">
+                    <svg><path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/></svg>
+                </div>
+                <div>
+                    <div class="modal-topbar-title">Paste Your Content</div>
+                    <div class="modal-topbar-subtitle">LaTeX, Markdown, or AI-copied text</div>
                 </div>
             </div>
-        </form>
+            <div class="modal-topbar-right">
+                <span class="char-count" id="charCount">0 characters</span>
+                <button type="button" class="icon-btn" onclick="closePasteModal()" title="Close">
+                    <svg><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <textarea class="modal-textarea" id="editor" placeholder="Paste your LaTeX code, Markdown, or AI chatbot response here...
+
+Supports:
+  • LaTeX math: $E = mc^2$ or $$\int_a^b f(x)dx$$
+  • Markdown formatting: **bold**, *italic*, lists, tables
+  • ChatGPT & Gemini formatted math with \[ ... \] brackets
+  • Drag & drop .tex files"></textarea>
+        </div>
+        <div class="modal-footer">
+            <div class="modal-footer-left">
+                <button type="button" class="btn btn-ghost" onclick="clearEditor()">
+                    <svg><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    Clear
+                </button>
+                <button type="button" class="btn btn-ghost" onclick="fillExample()">
+                    <svg><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/></svg>
+                    Example
+                </button>
+            </div>
+            <button type="button" class="btn btn-emerald btn-lg" onclick="confirmPaste()">
+                <svg><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></svg>
+                Done — Apply Content
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══ GUIDE MODAL ═══ -->
+    <div class="guide-modal" id="guideModal">
+        <div class="guide-header">
+            <span class="guide-title">Quick Start Guide</span>
+            <button type="button" class="icon-btn" onclick="closeGuide()">
+                <svg><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+        </div>
+        <div class="guide-step">
+            <div class="step-num">1</div>
+            <div class="step-text"><strong>Copy</strong> your AI math response from ChatGPT, Gemini, or any LaTeX source.</div>
+        </div>
+        <div class="guide-step">
+            <div class="step-num">2</div>
+            <div class="step-text"><strong>Click "Paste Content"</strong> and paste it into the editor. We auto-handle <code>\[ ... \]</code> brackets and AI formatting.</div>
+        </div>
+        <div class="guide-step">
+            <div class="step-num">3</div>
+            <div class="step-text"><strong>Enable Arabic Mode</strong> if your content is right-to-left (for Arabic exams and homework).</div>
+        </div>
+        <div class="guide-step">
+            <div class="step-num">4</div>
+            <div class="step-text"><strong>Export</strong> — click "Generate .docx" for an editable Word file, or "Export PDF" to print directly.</div>
+        </div>
+        <button class="btn btn-accent" style="width:100%; margin-top:0.75rem;" onclick="closeGuide()">Got it!</button>
     </div>
 
     <script>
-        // Theme Management
+        // ═══════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════
+        let currentContent = localStorage.getItem('tex_content') || '';
+
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const charCount = document.getElementById('charCount');
+        const rtlCheck = document.getElementById('rtlCheck');
+        const hiddenContent = document.getElementById('hiddenContent');
+        const hiddenRTL = document.getElementById('hiddenRTL');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+
+        // Init
+        editor.value = currentContent;
+        hiddenContent.value = currentContent;
+        if (localStorage.getItem('is_rtl') === 'true') {
+            rtlCheck.checked = true;
+            preview.classList.add('rtl');
+            document.getElementById('rtlChip').classList.add('active');
+            hiddenRTL.value = 'on';
+        }
+        updateStatus();
+        updatePreview();
+
+        // ═══════════════════════════════════════════
+        // THEME
+        // ═══════════════════════════════════════════
         const themeBtn = document.getElementById('themeBtn');
-        const html = document.documentElement;
-        
-        function toggleTheme() {
-            const isDark = html.getAttribute('data-theme') === 'dark';
-            html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            themeBtn.innerText = isDark ? '🌙' : '☀️';
-            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        const htmlEl = document.documentElement;
+        const sunIcon = `<svg><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+        const moonIcon = `<svg><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
+
+        function setTheme(theme) {
+            htmlEl.setAttribute('data-theme', theme);
+            themeBtn.innerHTML = theme === 'dark' ? sunIcon : moonIcon;
+            localStorage.setItem('theme', theme);
         }
 
-        if(localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)){
-            html.setAttribute('data-theme', 'dark');
-            themeBtn.innerText = '☀️';
+        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            setTheme('dark');
+        } else {
+            setTheme('light');
         }
-        themeBtn.addEventListener('click', toggleTheme);
+        themeBtn.addEventListener('click', () => setTheme(htmlEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
 
-        // Toast Notification
+        // ═══════════════════════════════════════════
+        // TOAST
+        // ═══════════════════════════════════════════
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.innerText = msg;
@@ -368,81 +1108,185 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // Editor logic
-        const editor = document.getElementById('editor');
-        const preview = document.getElementById('preview');
-        const charCount = document.getElementById('charCount');
-        const rtlCheck = document.getElementById('rtlCheck');
-
-        // Restore content from localStorage
-        if(localStorage.getItem('tex_content')) {
-            editor.value = localStorage.getItem('tex_content');
-        }
-        if(localStorage.getItem('is_rtl') === 'true') {
-            rtlCheck.checked = true;
-            preview.classList.add('rtl');
+        // ═══════════════════════════════════════════
+        // PASTE MODAL
+        // ═══════════════════════════════════════════
+        function openPasteModal() {
+            document.getElementById('modalBackdrop').classList.add('open');
+            const modal = document.getElementById('pasteModal');
+            modal.classList.add('open');
+            editor.value = currentContent;
+            updateCharCount();
+            // Focus editor after animation
+            setTimeout(() => editor.focus(), 350);
         }
 
-        let previewTimeout;
-        function updatePreview() {
-            try {
-                const val = editor.value;
-                charCount.innerText = val.length + ' chars';
-                localStorage.setItem('tex_content', val);
-                
-                // Heuristics to recover unescaped math brackets
-                // 1a. Math block [ ... ] on its own line -> $$ ... $$
-                let processedVal = val.replace(/^[ \t]*\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\][ \t]*$/gm, '$$$$$1$$$$');
-                // 1b. Multi-line ChatGPT bracket format:
-                // [
-                // f(x) = ...
-                // ]
-                processedVal = processedVal.replace(/^[ \t]*\[[ \t]*\n([^\[\]]+?)\n[ \t]*\][ \t]*$/gm, '$$$$$1$$$$');
-                // 2. Double parentheses: ((C_f)) -> \(C_f\)
-                processedVal = processedVal.replace(/\(\((.*?)\)\)/g, '\\($1\\)');
-                // 3. Remove AI citation markers like [cite_start] or [cite: 5, 6]
-                processedVal = processedVal.replace(/\[cite[_:][^\]]*\]/g, '');
-                
-                // Render Markdown first then MathJax
-                if(window.marked) {
-                    preview.innerHTML = marked.parse(processedVal);
-                } else {
-                    preview.innerText = processedVal;
-                }
-                
-                if(window.MathJax) {
-                    MathJax.typesetPromise([preview]).catch((err) => console.log(err.message));
-                }
-            } catch (e) {
-                console.error("Preview update error:", e);
+        function closePasteModal() {
+            document.getElementById('modalBackdrop').classList.remove('open');
+            document.getElementById('pasteModal').classList.remove('open');
+        }
+
+        function confirmPaste() {
+            currentContent = editor.value;
+            hiddenContent.value = currentContent;
+            localStorage.setItem('tex_content', currentContent);
+            updateStatus();
+            updatePreview();
+            closePasteModal();
+            if (currentContent.trim()) {
+                showToast('✅ Content applied — preview updated!');
             }
         }
 
-        editor.addEventListener('input', () => {
-            clearTimeout(previewTimeout);
-            previewTimeout = setTimeout(updatePreview, 500); // 500ms debounce
-        });
+        function updateCharCount() {
+            const len = editor.value.length;
+            charCount.innerText = len.toLocaleString() + ' character' + (len !== 1 ? 's' : '');
+        }
 
-        rtlCheck.addEventListener('change', () => {
+        editor.addEventListener('input', updateCharCount);
+
+        // ═══════════════════════════════════════════
+        // STATUS INDICATOR
+        // ═══════════════════════════════════════════
+        function updateStatus() {
+            if (currentContent.trim()) {
+                statusIndicator.className = 'status-indicator has-content';
+                const lines = currentContent.trim().split('\n').length;
+                statusText.textContent = `${currentContent.length} chars · ${lines} line${lines > 1 ? 's' : ''}`;
+            } else {
+                statusIndicator.className = 'status-indicator empty';
+                statusText.textContent = 'No content';
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        // PREVIEW RENDERING
+        // ═══════════════════════════════════════════
+        function updatePreview() {
+            const val = currentContent;
+
+            if (!val.trim()) {
+                preview.classList.add('empty');
+                preview.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>
+                        </div>
+                        <div>
+                            <strong style="display:block; margin-bottom:0.25rem;">No content yet</strong>
+                            Click <strong>"Paste Content"</strong> to get started
+                        </div>
+                    </div>`;
+                return;
+            }
+
+            preview.classList.remove('empty');
+
+            try {
+                // Preprocessing heuristics
+                let processed = val;
+                processed = processed.replace(/^[ \t]*\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\][ \t]*$/gm, '$$$$$$1$$$$');
+                processed = processed.replace(/^[ \t]*\[[ \t]*\n([^\[\]]+?)\n[ \t]*\][ \t]*$/gm, '$$$$$$1$$$$');
+                processed = processed.replace(/\(\((.*?)\)\)/g, '\\($1\\)');
+                processed = processed.replace(/\[cite[_:][^\]]*\]/g, '');
+
+                if (window.marked) {
+                    preview.innerHTML = marked.parse(processed);
+                } else {
+                    preview.innerText = processed;
+                }
+
+                if (window.MathJax) {
+                    MathJax.typesetPromise([preview]).catch(err => console.log(err.message));
+                }
+            } catch (e) {
+                console.error('Preview error:', e);
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        // RTL
+        // ═══════════════════════════════════════════
+        function toggleRTL() {
+            const chip = document.getElementById('rtlChip');
+            rtlCheck.checked = !rtlCheck.checked;
+            chip.classList.toggle('active', rtlCheck.checked);
             preview.classList.toggle('rtl', rtlCheck.checked);
+            hiddenRTL.value = rtlCheck.checked ? 'on' : '';
             localStorage.setItem('is_rtl', rtlCheck.checked);
-        });
+        }
 
-        // Initialize preview
-        updatePreview();
-
-        // Buttons
+        // ═══════════════════════════════════════════
+        // ACTIONS
+        // ═══════════════════════════════════════════
         function clearEditor() {
             editor.value = '';
+            updateCharCount();
+        }
+
+        function clearAll() {
+            currentContent = '';
+            editor.value = '';
+            hiddenContent.value = '';
+            localStorage.removeItem('tex_content');
+            updateCharCount();
+            updateStatus();
             updatePreview();
+            showToast('🗑️ Content cleared');
         }
 
         function fillExample() {
-            editor.value = "Here is an example equation:\n\n$$ \\int_{a}^{b} x^2 dx = \\frac{b^3 - a^3}{3} $$\n\nAnd an inline one: $E = mc^2$.";
+            const example = `# Integration Formula
+
+Here is an example equation:
+
+$$\\int_{a}^{b} x^2 \\, dx = \\frac{b^3 - a^3}{3}$$
+
+And an inline one: $E = mc^2$.
+
+## Properties
+
+- The function is **continuous** on $[a, b]$
+- The derivative: $f'(x) = 2x$
+- A table:
+
+| Variable | Value |
+|----------|-------|
+| $a$ | 0 |
+| $b$ | 1 |`;
+
+            editor.value = example;
+            currentContent = example;
+            hiddenContent.value = example;
+            localStorage.setItem('tex_content', example);
+            updateCharCount();
+            updateStatus();
             updatePreview();
+            showToast('✨ Example loaded!');
         }
 
-        // Drag and Drop
+        // ═══════════════════════════════════════════
+        // GUIDE MODAL
+        // ═══════════════════════════════════════════
+        function openGuide() {
+            document.getElementById('modalBackdrop').classList.add('open');
+            document.getElementById('guideModal').classList.add('open');
+        }
+
+        function closeGuide() {
+            document.getElementById('modalBackdrop').classList.remove('open');
+            document.getElementById('guideModal').classList.remove('open');
+        }
+
+        // Close guide on backdrop click (shared backdrop)
+        document.getElementById('modalBackdrop').addEventListener('click', () => {
+            closeGuide();
+            closePasteModal();
+        });
+
+        // ═══════════════════════════════════════════
+        // DRAG & DROP
+        // ═══════════════════════════════════════════
         editor.addEventListener('dragover', (e) => {
             e.preventDefault();
             editor.classList.add('dragover');
@@ -451,57 +1295,76 @@
         editor.addEventListener('drop', (e) => {
             e.preventDefault();
             editor.classList.remove('dragover');
-            if(e.dataTransfer.files.length > 0) {
+            if (e.dataTransfer.files.length > 0) {
                 const file = e.dataTransfer.files[0];
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     editor.value = ev.target.result;
-                    updatePreview();
+                    updateCharCount();
                 };
                 reader.readAsText(file);
             }
         });
 
-        // Form Submission visual feedback for Native Download
+        // ═══════════════════════════════════════════
+        // FORM SUBMIT
+        // ═══════════════════════════════════════════
         document.getElementById('convertForm').addEventListener('submit', (e) => {
-            if(!editor.value.trim()) {
+            hiddenContent.value = currentContent;
+            hiddenRTL.value = rtlCheck.checked ? 'on' : '';
+
+            if (!currentContent.trim()) {
                 e.preventDefault();
-                showToast("⚠️ Please enter some LaTeX code first.");
+                showToast('⚠️ Please paste some content first!');
                 return;
             }
 
             const btn = document.getElementById('submitBtn');
-            const originalContent = btn.innerHTML;
+            const orig = btn.innerHTML;
             btn.innerHTML = '<span class="spinner"></span> Converting...';
             btn.disabled = true;
 
-            // Restore button after download starts
             setTimeout(() => {
-                btn.innerHTML = originalContent;
+                btn.innerHTML = orig;
                 btn.disabled = false;
-                showToast("✅ Download requested!");
+                showToast('✅ Download started!');
             }, 2500);
         });
 
-        // PDF Export functionality using Native Print
+        // ═══════════════════════════════════════════
+        // PDF EXPORT
+        // ═══════════════════════════════════════════
         function exportPDF() {
-            if(!editor.value.trim()) {
-                showToast("⚠️ Please enter some LaTeX code first.");
+            if (!currentContent.trim()) {
+                showToast('⚠️ Please paste some content first!');
                 return;
             }
-
-            const isDark = html.getAttribute('data-theme') === 'dark';
-            if(isDark) {
-                html.setAttribute('data-theme', 'light');
-            }
-
+            const isDark = htmlEl.getAttribute('data-theme') === 'dark';
+            if (isDark) htmlEl.setAttribute('data-theme', 'light');
             setTimeout(() => {
                 window.print();
-                if(isDark) {
-                    html.setAttribute('data-theme', 'dark');
-                }
+                if (isDark) htmlEl.setAttribute('data-theme', 'dark');
             }, 300);
         }
+
+        // ═══════════════════════════════════════════
+        // KEYBOARD SHORTCUTS
+        // ═══════════════════════════════════════════
+        document.addEventListener('keydown', (e) => {
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                closePasteModal();
+                closeGuide();
+            }
+            // Ctrl+V when not in modal opens the paste modal
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v' && !document.getElementById('pasteModal').classList.contains('open')) {
+                // Only intercept if not already typing in textarea
+                if (document.activeElement !== editor) {
+                    e.preventDefault();
+                    openPasteModal();
+                }
+            }
+        });
     </script>
 </body>
 </html>

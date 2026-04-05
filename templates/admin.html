@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — LaTeX to Word</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --hue: 250;
+            --accent: hsl(var(--hue), 85%, 62%);
+            --accent-glow: hsla(var(--hue), 85%, 62%, 0.35);
+            --emerald: hsl(160, 70%, 45%);
+            --emerald-glow: hsla(160, 70%, 45%, 0.25);
+            --amber: hsl(38, 95%, 55%);
+            --amber-glow: hsla(38, 95%, 55%, 0.25);
+            
+            --bg: hsl(225, 25%, 7%);
+            --surface: hsla(225, 30%, 14%, 0.7);
+            --surface-solid: hsl(225, 30%, 14%);
+            --surface-hover: hsl(225, 30%, 18%);
+            --text: hsl(210, 40%, 96%);
+            --text-secondary: hsl(215, 20%, 60%);
+            --text-tertiary: hsl(215, 15%, 42%);
+            --border: hsla(210, 40%, 96%, 0.08);
+
+            --radius-lg: 1.25rem;
+            --font: 'Inter', system-ui, sans-serif;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 50% 0%, hsla(var(--hue), 60%, 40%, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 50% at 10% 100%, hsla(160, 60%, 40%, 0.08) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .topbar {
+            padding: 1.5rem 3rem;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: var(--surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            animation: slideDown 0.6s var(--ease) both;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), hsl(335, 80%, 60%));
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .logo span {
+            color: var(--text-tertiary);
+            font-weight: 500;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.2s var(--ease);
+        }
+        .btn-back:hover { color: var(--text); }
+        .btn-back svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        .dashboard {
+            flex: 1;
+            padding: 4rem 3rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header {
+            margin-bottom: 3rem;
+            animation: fadeIn 0.6s var(--ease) 0.1s both;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 2rem;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            transition: transform 0.3s var(--ease), border-color 0.3s var(--ease), box-shadow 0.3s var(--ease);
+            animation: fadeIn 0.6s var(--ease) both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.2s; }
+        .card:nth-child(2) { animation-delay: 0.3s; }
+        .card:nth-child(3) { animation-delay: 0.4s; }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .card:hover .card-icon { transform: scale(1.1); }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s var(--ease);
+        }
+
+        .card-icon svg { width: 24px; height: 24px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        .card-1 .card-icon { background: var(--accent); box-shadow: 0 4px 20px var(--accent-glow); }
+        .card-2 .card-icon { background: var(--emerald); box-shadow: 0 4px 20px var(--emerald-glow); }
+        .card-3 .card-icon { background: var(--amber); box-shadow: 0 4px 20px var(--amber-glow); }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 3rem;
+            font-weight: 900;
+            color: white;
+            line-height: 1;
+        }
+
+        .chart-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 2rem;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            margin-top: 2rem;
+            animation: fadeIn 0.6s var(--ease) 0.5s both;
+        }
+        .chart-header {
+            margin-bottom: 1.5rem;
+        }
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+        .chart-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            LaTeX to Word <span>Admin</span>
+        </div>
+        <a href="/" class="btn-back">
+            <svg><path d="m15 18-6-6 6-6"/></svg>
+            Back to App
+        </a>
+    </header>
+
+    <main class="dashboard">
+        <div class="header">
+            <h1>System Overview</h1>
+            <p>Live statistics and performance metrics</p>
+        </div>
+
+        <div class="grid">
+            <!-- Users Card -->
+            <div class="card card-1">
+                <div class="card-icon">
+                    <svg><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                </div>
+                <div class="card-title">Unique Users</div>
+                <div class="card-value">{{ "{:,}".format(stats.users) }}</div>
+            </div>
+
+            <!-- Downloads Card -->
+            <div class="card card-2">
+                <div class="card-icon">
+                    <svg><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </div>
+                <div class="card-title">Downloads Generated</div>
+                <div class="card-value">{{ "{:,}".format(stats.downloads) }}</div>
+            </div>
+
+            <!-- Characters Card -->
+            <div class="card card-3">
+                <div class="card-icon">
+                    <svg><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                </div>
+                <div class="card-title">Characters Processed</div>
+                <div class="card-value">{{ "{:,}".format(stats.chars) }}</div>
+            </div>
+        </div>
+        <!-- Chart Section -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <div class="chart-title">Activity Timeline</div>
+                <div class="chart-subtitle">Users and Downloads over the last 14 days</div>
+            </div>
+            <div style="position: relative; height:400px; width:100%">
+                <canvas id="historyChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const historyData = {{ stats.history | tojson }};
+        
+        const labels = historyData.map(d => {
+            const dateObj = new Date(d.date);
+            return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        
+        const usersData = historyData.map(d => d.users);
+        const downloadsData = historyData.map(d => d.downloads);
+
+        const ctx = document.getElementById('historyChart').getContext('2d');
+        
+        Chart.defaults.color = 'hsl(215, 20%, 60%)';
+        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Unique Users',
+                        data: usersData,
+                        borderColor: 'hsl(250, 85%, 62%)',
+                        backgroundColor: 'hsla(250, 85%, 62%, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: 'hsl(250, 85%, 62%)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'hsl(250, 85%, 62%)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Downloads',
+                        data: downloadsData,
+                        borderColor: 'hsl(160, 70%, 45%)',
+                        backgroundColor: 'hsla(160, 70%, 45%, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: 'hsl(160, 70%, 45%)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'hsl(160, 70%, 45%)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'hsla(225, 30%, 14%, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: true,
+                        borderColor: 'hsla(210, 40%, 96%, 0.1)',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'hsla(210, 40%, 96%, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+            }
+        });
+    </script>
+</body>
+</html>
