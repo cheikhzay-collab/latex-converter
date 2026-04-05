@@ -33,33 +33,81 @@ init_db()
 # Use local copy of MML2OMML.XSL so it works in production too
 XSLT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "MML2OMML.XSL")
 
-def preprocess_copied_math(text):
-    """
-    Cleans up common LLM math notation and fixes the 'Interval Bug'.
-    """
-    # 1. Standard LaTeX display: \[ ... \] -> $$ ... $$
-    text = re.sub(r'\\\[([\s\S]*?)\\\]', r'$$\1$$', text)
-    
-    # 2. Heuristic for raw brackets [ ... ] on own line
-    # We must AVOID matching intervals like [1, +\infty[
+def clean_raw_brackets(text):
+    """Fixes [ ... ] blocks which frequently appear when copying from ChatGPT or Gemini directly."""
     def bracket_math_cleaner(match):
         content = match.group(1).strip()
         # French interval check: [digit, digit[ or [digit; digit]
         if re.search(r'^[\d., \-+]+[ \t]*[,;][ \t]*[\d., \-+\\infty]+[\[\]]?$', content):
             return match.group(0) # Keep as is
-        # Strong math indicator: contains \, ^, _, =, or is long
-        if re.search(r'[\^\\=_]|\d+[a-z]|\\frac', content) or len(content) > 15:
+        # Strong math indicator
+        if re.search(r'[\^\\=_]|\d+[a-z]|\\frac|\\int|\\sum|\\lim', content) or len(content) > 15:
             return f"$${content}$$"
         return match.group(0)
 
+    # single-line bracket
     text = re.sub(r'(?m)^[ \t]*\[([^\[\]\n]+)\][ \t]*$', bracket_math_cleaner, text)
+    # multi-line bracket
+    text = re.sub(r'(?m)^[ \t]*\[\s*\n([\s\S]*?)\n[ \t]*\][ \t]*$', bracket_math_cleaner, text)
+    return text
+
+def preprocess_chatgpt(text):
+    """Safe pipeline for ChatGPT"""
+    text = clean_raw_brackets(text)
+    # 1. Standard LaTeX display: \[ ... \] -> $$ ... $$
+    text = re.sub(r'\\\[([\s\S]*?)\\\]', r'$$\1$$', text)
+    # 2. Double parentheses ((C_f)) -> \(C_f\)
+    text = re.sub(r'\(\((.*?)\)\)', r'\(\1\)', text)
+    # 3. Standard LaTeX inline: \( ... \) -> $ ... $
+    text = re.sub(r'\\\((.*?)\\\)', r'$\1$', text)
+    
+    # Simple parenthesis inline (E = mc^2) -> $E = mc^2$ avoiding nested parens
+    def paren_math_cleaner(match):
+        content = match.group(1).strip()
+        if re.search(r'[\^\\=_]', content) and len(content) > 3:
+            return f"${content}$"
+        return match.group(0)
+
+    text = re.sub(r'\(([^\n()]+)\)', paren_math_cleaner, text)
+    return text
+
+def preprocess_gemini(text):
+    """Aggressive heuristic pipeline for Gemini which has varied outputs"""
+    text = clean_raw_brackets(text)
+    # 1. Standard LaTeX display: \[ ... \] -> $$ ... $$
+    text = re.sub(r'\\\[([\s\S]*?)\\\]', r'$$\1$$', text)
+    
+    # 2. Simple parenthesis inline (E = mc^2) -> $E = mc^2$ avoiding nested parens
+    def paren_math_cleaner(match):
+        content = match.group(1).strip()
+        if re.search(r'[\^\\=_]', content) and len(content) > 3:
+            return f"${content}$"
+        return match.group(0)
+
+    text = re.sub(r'\(([^\n()]+)\)', paren_math_cleaner, text)
     
     # 3. Double parentheses ((C_f)) -> \(C_f\)
     text = re.sub(r'\(\((.*?)\)\)', r'\(\1\)', text)
-    
-    # 4. Remove AI citation markers
-    text = re.sub(r'\[cite[_:][^\]]*\]', '', text)
     return text
+
+def preprocess_copied_math(text):
+    """
+    Cleans up common LLM math notation and fixes the 'Interval Bug'.
+    Uses Smart AI Detection to route to the correct pipeline.
+    """
+    # Remove AI citation markers common to both
+    text = re.sub(r'\[cite[_:][^\]]*\]', '', text)
+    
+    # Count indicators
+    chatgpt_indicators = len(re.findall(r'\\\[|\\\(', text))
+    gemini_indicators = len(re.findall(r'\$\$', text))
+    
+    if chatgpt_indicators > 0 and chatgpt_indicators > gemini_indicators:
+        print("[System] Detected: ChatGPT Source")
+        return preprocess_chatgpt(text)
+    else:
+        print("[System] Detected: Gemini Source / Default")
+        return preprocess_gemini(text)
 
 # Cache the XSLT transformer to avoid Disk/Memory issues
 try:
