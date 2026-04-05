@@ -30,8 +30,8 @@ def init_db():
 
 init_db()
 
-# Path to MML2OMML.XSL found on user's system
-XSLT_PATH = r"C:\Program Files\Microsoft Office\root\Office16\MML2OMML.XSL"
+# Use local copy of MML2OMML.XSL so it works in production too
+XSLT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "MML2OMML.XSL")
 
 def preprocess_copied_math(text):
     """
@@ -61,37 +61,44 @@ def preprocess_copied_math(text):
     text = re.sub(r'\[cite[_:][^\]]*\]', '', text)
     return text
 
+# Cache the XSLT transformer to avoid Disk/Memory issues
+try:
+    _xslt_tree = etree.parse(XSLT_PATH)
+    MML2OMML_TRANSFORM = etree.XSLT(_xslt_tree)
+except Exception as e:
+    print(f"Failed to load MML2OMML.XSL: {e}")
+    MML2OMML_TRANSFORM = None
+
 def get_omml(latex):
     """Converts LaTeX to OMML XML element using MML2OMML.XSL."""
+    if MML2OMML_TRANSFORM is None:
+        return None, "XSLT Transformer not loaded"
     try:
         mathml = latex2mathml.converter.convert(latex)
         # Parse MathML
         mml_root = etree.fromstring(mathml.encode('utf-8'))
         
-        # Load XSLT
-        xslt_tree = etree.parse(XSLT_PATH)
-        transform = etree.XSLT(xslt_tree)
-        
         # Transform to OMML
-        omml_tree = transform(mml_root)
+        omml_tree = MML2OMML_TRANSFORM(mml_root)
         # Convert to string for python-docx to parse
         omml_str = etree.tostring(omml_tree)
-        return parse_xml(omml_str)
+        return parse_xml(omml_str), None
     except Exception as e:
-        print(f"OMML Conversion Error: {e}")
-        return None
+        error_msg = f"{type(e).__name__}: {str(e)}"
+        print(f"OMML Conversion Error for '{latex}': {error_msg}")
+        return None, error_msg
 
 def add_math_to_run(paragraph, latex, is_display=False):
     """Inserts a native Math object into a paragraph."""
     if is_display:
         paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
         
-    omml_node = get_omml(latex)
+    omml_node, err = get_omml(latex)
     if omml_node is not None:
         paragraph._element.append(omml_node)
     else:
         # Fallback to red text if conversion fails
-        run = paragraph.add_run(f"[Math Error: {latex}]")
+        run = paragraph.add_run(f"[Math Error: {latex} | {err}]")
         run.font.color.rgb = RGBColor(255, 0, 0)
 
 def html_to_docx(html_content, document, is_rtl=False):
