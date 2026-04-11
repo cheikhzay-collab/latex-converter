@@ -815,6 +815,136 @@
         .status-indicator.has-content .dot { background: var(--emerald); animation: float 2s ease-in-out infinite; }
 
         /* ═══════════════════════════════════════════
+           PREVIEW CONTENT DESIGN SYSTEM
+           ═══════════════════════════════════════════ */
+        .preview-card h1, .preview-card h2, .preview-card h3, .preview-card h4 {
+            margin: 1.8rem 0 1.1rem;
+            color: var(--text);
+            font-weight: 800;
+            line-height: 1.25;
+            letter-spacing: -0.02em;
+        }
+        .preview-card h1 {
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.6rem;
+            margin-top: 0.5rem;
+        }
+        .preview-card h2 {
+            font-size: 1.45rem;
+            position: relative;
+            padding-left: 1rem;
+        }
+        .preview-card h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.3rem;
+            bottom: 0.3rem;
+            width: 4px;
+            background: linear-gradient(to bottom, var(--accent), var(--rose));
+            border-radius: var(--radius-full);
+        }
+        .preview-card h3 { font-size: 1.2rem; }
+
+        .preview-card p {
+            margin-bottom: 1.1rem;
+            line-height: 1.75;
+            color: var(--text);
+        }
+
+        .preview-card ul, .preview-card ol {
+            margin: 0 0 1.25rem 1.6rem;
+            padding: 0;
+        }
+        .preview-card li {
+            margin-bottom: 0.6rem;
+        }
+        .preview-card li strong {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        /* Tables - Glassmorphism style */
+        .preview-card table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 1.75rem 0;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: hsla(var(--hue), 20%, 50%, 0.03);
+            font-size: 0.95rem;
+        }
+        .preview-card th, .preview-card td {
+            padding: 0.85rem 1.1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .preview-card th {
+            background: var(--surface-hover);
+            font-weight: 800;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-tertiary);
+        }
+        .preview-card tr:last-child td {
+            border-bottom: none;
+        }
+        .preview-card tr:nth-child(even) {
+            background: hsla(var(--hue), 20%, 50%, 0.02);
+        }
+        .preview-card tr:hover td {
+            background: hsla(var(--hue), 85%, 62%, 0.04);
+        }
+
+        /* RTL Adjustments for content */
+        .preview-card.rtl h1, .preview-card.rtl h2, .preview-card.rtl h3,
+        .preview-card.rtl p, .preview-card.rtl li, .preview-card.rtl table {
+            text-align: right;
+        }
+        .preview-card.rtl h2 {
+            padding-left: 0;
+            padding-right: 1rem;
+        }
+        .preview-card.rtl h2::before {
+            left: auto;
+            right: 0;
+        }
+        .preview-card.rtl ul, .preview-card.rtl ol {
+            margin: 0 1.6rem 1.25rem 0;
+        }
+        .preview-card.rtl th, .preview-card.rtl td {
+            text-align: right;
+        }
+
+        /* Inline Code & Blockquotes */
+        .preview-card code:not(.mjx-container *) {
+            background: var(--surface-hover);
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: var(--accent);
+        }
+        .preview-card blockquote {
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            border-left: 4px solid var(--border-active);
+            background: hsla(var(--hue), 20%, 50%, 0.03);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+        .preview-card.rtl blockquote {
+            border-left: none;
+            border-right: 4px solid var(--border-active);
+            border-radius: var(--radius-md) 0 0 var(--radius-md);
+        }
+
+        /* ═══════════════════════════════════════════
            PRINT
            ═══════════════════════════════════════════ */
         @media print {
@@ -1160,8 +1290,133 @@ Supports:
         }
 
         // ═══════════════════════════════════════════
-        // PREVIEW RENDERING
+        // PREVIEW RENDERING — Full preprocessing pipeline
+        // Mirrors the Python backend logic in app.py
         // ═══════════════════════════════════════════
+
+        /**
+         * Cleans bare [...] blocks (ChatGPT display math without backslashes).
+         * Mirrors Python clean_raw_brackets().
+         */
+        function cleanRawBrackets(text) {
+            // Normalize non-breaking spaces
+            text = text.replace(/\u00a0/g, ' ');
+
+            function bracketMathCleaner(match, content) {
+                content = content.trim();
+                // French interval check: [digit, digit[ or [digit; digit]
+                if (/^[\d., \-+]+[ \t]*[,;][ \t]*[\d., \-+\\infty]+[\[\]]?$/.test(content)) {
+                    return match; // Keep interval as-is
+                }
+                // Strong math indicator: contains ^, \, =, _, \frac, \int, etc. or is long
+                if (/[\^\\=_]|\d+[a-z]|\\frac|\\int|\\sum|\\lim/.test(content) || content.length > 15) {
+                    return `$$${content}$$`;
+                }
+                return match; // Not math, keep as-is
+            }
+
+            // Single-line bracket: [ content ]
+            text = text.replace(/^[^\S\r\n]*\[([^\[\]\n]+)\][^\S\r\n]*$/gm, (m, p1) => bracketMathCleaner(m, p1));
+            // Multi-line bracket: [\n content \n]
+            text = text.replace(/^[^\S\r\n]*\[\s*\n([\s\S]*?)\n[^\S\r\n]*\][^\S\r\n]*$/gm, (m, p1) => bracketMathCleaner(m, p1));
+            return text;
+        }
+
+        /**
+        /**
+         * Applies parenMathCleaner safely by ignoring text already inside LaTeX math blocks
+         */
+        function safeParenMathCleaner(text) {
+            const hidden = {};
+            let counter = 0;
+
+            function hide(match) {
+                const key = `__MATH_${counter}__`;
+                hidden[key] = match;
+                counter++;
+                return key;
+            }
+
+            // Hide existing math blocks
+            text = text.replace(/\$\$[\s\S]*?\$\$/g, hide);
+            text = text.replace(/\\\[[\s\S]*?\\\]/g, hide);
+            text = text.replace(/\\\([\s\S]*?\\\)/g, hide);
+            text = text.replace(/\$[\s\S]*?\$/g, hide);
+
+            function parenMathCleanerFn(match, content) {
+                content = content.trim();
+                if (/[\^\\=_]/.test(content) && content.length > 3) {
+                    return `$${content}$`;
+                }
+                return match;
+            }
+
+            // Apply paren cleaner to remaining text
+            // Note: JS doesn't support lookbehind in all older browsers, but we'll use it since it matches Python
+            text = text.replace(/(?<!\\)\(((?:[^()]|\([^()]*\))*)\)/g, parenMathCleanerFn);
+
+            // Restore hidden math
+            for (const [key, val] of Object.entries(hidden)) {
+                text = text.replace(key, val);
+            }
+
+            return text;
+        }
+
+        /**
+         * ChatGPT pipeline — mirrors Python preprocess_chatgpt().
+         */
+        function preprocessChatGPT(text) {
+            text = cleanRawBrackets(text);
+            // 1. Standard LaTeX display: \[ ... \] -> $$ ... $$
+            text = text.replace(/\\\[([\s\S]*?)\\\]/g, '\n\n$$$$$1$$$$\n\n');
+            // 2. Double parentheses ((C_f)) -> \(C_f\)
+            text = text.replace(/\(\(([\s\S]*?)\)\)/g, '\\($1\\)');
+            // 3. Standard LaTeX inline: \( ... \) -> $ ... $
+            text = text.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+            // 4. Interval notation: ([a, b]) -> $[a, b]$
+            text = text.replace(/\(\[([^\]]*?[,;][^\]]*?)\]\)/g, '$$[$1]$$');
+            // 5. Bare parenthesis inline: (E = mc^2) (Safe from existing math)
+            text = safeParenMathCleaner(text);
+            return text;
+        }
+
+        /**
+         * Gemini pipeline — mirrors Python preprocess_gemini().
+         */
+        function preprocessGemini(text) {
+            text = cleanRawBrackets(text);
+            // 1. Standard LaTeX display: \[ ... \] -> $$ ... $$
+            text = text.replace(/\\\[([\s\S]*?)\\\]/g, '\n\n$$$$$1$$$$\n\n');
+            // 2. Interval notation: ([a, b]) -> $[a, b]$
+            text = text.replace(/\(\[([^\]]*?[,;][^\]]*?)\]\)/g, '$$[$1]$$');
+            // 3. Bare parenthesis inline (Safe from existing math)
+            text = safeParenMathCleaner(text);
+            // 4. Double parentheses ((C_f)) -> \(C_f\)
+            text = text.replace(/\(\(([\s\S]*?)\)\)/g, '\\($1\\)');
+            return text;
+        }
+
+        /**
+         * Smart AI detection + preprocessing — mirrors Python preprocess_copied_math().
+         */
+        function preprocessCopiedMath(text) {
+            // Remove AI citation markers
+            text = text.replace(/\[cite[_:][^\]]*\]/g, '');
+
+            // Count indicators to detect source
+            const chatgptIndicators = (text.match(/\\\[|\\\(/g) || []).length;
+            const geminiIndicators = (text.match(/\$\$/g) || []).length;
+
+            if (chatgptIndicators > 0 && chatgptIndicators > geminiIndicators) {
+                console.log('[Preview] Detected: ChatGPT Source');
+                return preprocessChatGPT(text);
+            } else {
+                console.log('[Preview] Detected: Gemini Source / Default');
+                return preprocessGemini(text);
+            }
+        }
+
         function updatePreview() {
             const val = currentContent;
 
@@ -1183,12 +1438,8 @@ Supports:
             preview.classList.remove('empty');
 
             try {
-                // Preprocessing heuristics
-                let processed = val;
-                processed = processed.replace(/^[ \t]*\[([^\[\]]*?[=<>+\-*\^][^\[\]]*?)\][ \t]*$/gm, '$$$$$$1$$$$');
-                processed = processed.replace(/^[ \t]*\[[ \t]*\n([^\[\]]+?)\n[ \t]*\][ \t]*$/gm, '$$$$$$1$$$$');
-                processed = processed.replace(/\(\((.*?)\)\)/g, '\\($1\\)');
-                processed = processed.replace(/\[cite[_:][^\]]*\]/g, '');
+                // Apply the same preprocessing pipeline as the Python backend
+                let processed = preprocessCopiedMath(val);
 
                 if (window.marked) {
                     preview.innerHTML = marked.parse(processed);

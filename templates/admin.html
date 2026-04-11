@@ -288,8 +288,9 @@
         </div>
     </main>
 
+    <script id="history-data" type="application/json">{{ stats.history | tojson }}</script>
     <script>
-        const historyData = {{ stats.history | tojson }};
+        const historyData = JSON.parse(document.getElementById('history-data').textContent);
         
         const labels = historyData.map(d => {
             const dateObj = new Date(d.date);

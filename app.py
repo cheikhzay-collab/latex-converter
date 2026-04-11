@@ -35,6 +35,9 @@ XSLT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "MML2OMML.X
 
 def clean_raw_brackets(text):
     """Fixes [ ... ] blocks which frequently appear when copying from ChatGPT or Gemini directly."""
+    # Normalize non-breaking spaces before matching
+    text = text.replace('\xa0', ' ')
+    
     def bracket_math_cleaner(match):
         content = match.group(1).strip()
         # French interval check: [digit, digit[ or [digit; digit]
@@ -46,48 +49,77 @@ def clean_raw_brackets(text):
         return match.group(0)
 
     # single-line bracket
-    text = re.sub(r'(?m)^[ \t]*\[([^\[\]\n]+)\][ \t]*$', bracket_math_cleaner, text)
+    text = re.sub(r'(?m)^[^\S\r\n]*\[([^\[\]\n]+)\][^\S\r\n]*$', bracket_math_cleaner, text)
     # multi-line bracket
-    text = re.sub(r'(?m)^[ \t]*\[\s*\n([\s\S]*?)\n[ \t]*\][ \t]*$', bracket_math_cleaner, text)
+    text = re.sub(r'(?m)^[^\S\r\n]*\[\s*\n([\s\S]*?)\n[^\S\r\n]*\][^\S\r\n]*$', bracket_math_cleaner, text)
+    return text
+
+def safe_paren_math_cleaner(text):
+    """
+    Applies paren_math_cleaner to convert bare (E = mc^2) to $E = mc^2$,
+    but safely ignores text that is already inside a LaTeX math block.
+    """
+    hidden = {}
+    counter = 0
+
+    def hide(match):
+        nonlocal counter
+        key = f"__MATH_{counter}__"
+        hidden[key] = match.group(0)
+        counter += 1
+        return key
+
+    # Hide existing math blocks so we don't double-process or corrupt them
+    text = re.sub(r'\$\$[\s\S]*?\$\$', hide, text)      # Display math
+    text = re.sub(r'\\\[[\s\S]*?\\\]', hide, text)      # LaTeX Display
+    text = re.sub(r'\\\([\s\S]*?\\\)', hide, text)      # LaTeX Inline
+    text = re.sub(r'\$[\s\S]*?\$', hide, text)          # MathJax Inline
+    
+    def paren_math_cleaner_fn(match):
+        content = match.group(1).strip()
+        if re.search(r'[\^\\=_]', content) and len(content) > 3:
+            return f"${content}$"
+        return match.group(0)
+
+    # 1-level nested like (f'(x) = 2x)
+    text = re.sub(r'(?<!\\)\(((?:[^()]|\([^()]*\))*)\)', paren_math_cleaner_fn, text)
+    
+    # Restore hidden math
+    for key, val in hidden.items():
+        text = text.replace(key, val)
+        
     return text
 
 def preprocess_chatgpt(text):
     """Safe pipeline for ChatGPT"""
     text = clean_raw_brackets(text)
     # 1. Standard LaTeX display: \[ ... \] -> $$ ... $$
-    text = re.sub(r'\\\[([\s\S]*?)\\\]', r'$$\1$$', text)
+    text = re.sub(r'\\\[([\s\S]*?)\\\]', r'\n\n$$\1$$\n\n', text)
     # 2. Double parentheses ((C_f)) -> \(C_f\)
-    text = re.sub(r'\(\((.*?)\)\)', r'\(\1\)', text)
+    text = re.sub(r'\(\(([\s\S]*?)\)\)', r'\(\1\)', text)
     # 3. Standard LaTeX inline: \( ... \) -> $ ... $
-    text = re.sub(r'\\\((.*?)\\\)', r'$\1$', text)
+    text = re.sub(r'\\\(([\s\S]*?)\\\)', r'$\1$', text)
+    # 4. ChatGPT interval notation: ([a, b]) -> $[a, b]$
+    text = re.sub(r'\(\[([^\]]*?[,;][^\]]*?)\]\)', r'$[\1]$', text)
     
-    # Simple parenthesis inline (E = mc^2) -> $E = mc^2$ avoiding nested parens
-    def paren_math_cleaner(match):
-        content = match.group(1).strip()
-        if re.search(r'[\^\\=_]', content) and len(content) > 3:
-            return f"${content}$"
-        return match.group(0)
-
-    text = re.sub(r'\(([^\n()]+)\)', paren_math_cleaner, text)
+    # 5. Simple parenthesis inline (E = mc^2) (Safe from existing math)
+    text = safe_paren_math_cleaner(text)
+    
     return text
 
 def preprocess_gemini(text):
     """Aggressive heuristic pipeline for Gemini which has varied outputs"""
     text = clean_raw_brackets(text)
     # 1. Standard LaTeX display: \[ ... \] -> $$ ... $$
-    text = re.sub(r'\\\[([\s\S]*?)\\\]', r'$$\1$$', text)
+    text = re.sub(r'\\\[([\s\S]*?)\\\]', r'\n\n$$\1$$\n\n', text)
+    # 2. Interval notation: ([a, b]) -> $[a, b]$
+    text = re.sub(r'\(\[([^\]]*?[,;][^\]]*?)\]\)', r'$[\1]$', text)
     
-    # 2. Simple parenthesis inline (E = mc^2) -> $E = mc^2$ avoiding nested parens
-    def paren_math_cleaner(match):
-        content = match.group(1).strip()
-        if re.search(r'[\^\\=_]', content) and len(content) > 3:
-            return f"${content}$"
-        return match.group(0)
-
-    text = re.sub(r'\(([^\n()]+)\)', paren_math_cleaner, text)
+    # 3. Simple parenthesis inline (E = mc^2) (Safe from existing math)
+    text = safe_paren_math_cleaner(text)
     
-    # 3. Double parentheses ((C_f)) -> \(C_f\)
-    text = re.sub(r'\(\((.*?)\)\)', r'\(\1\)', text)
+    # 4. Double parentheses ((C_f)) -> \(C_f\)
+    text = re.sub(r'\(\(([\s\S]*?)\)\)', r'\(\1\)', text)
     return text
 
 def preprocess_copied_math(text):
@@ -95,6 +127,9 @@ def preprocess_copied_math(text):
     Cleans up common LLM math notation and fixes the 'Interval Bug'.
     Uses Smart AI Detection to route to the correct pipeline.
     """
+    # Normalize Windows line endings (\r\n -> \n) to prevent regex failures
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    
     # Remove AI citation markers common to both
     text = re.sub(r'\[cite[_:][^\]]*\]', '', text)
     
@@ -219,17 +254,17 @@ def process_inline(element, paragraph):
     def strip_br_in_math(m):
         return re.sub(r'<br\s*/?>', ' ', m.group(0))
     inner_content = re.sub(r'\$\$[\s\S]*?\$\$', strip_br_in_math, inner_content)
-    inner_content = re.sub(r'\$[^\$\n]+?\$', strip_br_in_math, inner_content)
+    inner_content = re.sub(r'\$[^\$]+?\$', strip_br_in_math, inner_content)
 
     # Split into sections of text, display math ($$), and inline math ($)
-    parts = re.split(r'(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)', inner_content)
+    parts = re.split(r'(\$\$[\s\S]*?\$\$|\$[^\$]+?\$)', inner_content)
     
     for part in parts:
         if not part: continue
         if part.startswith('$$') and part.endswith('$$'):
             # Unescape LaTeX display math
             latex = html.unescape(part[2:-2])
-            add_math_to_run(paragraph, latex, is_display=False)
+            add_math_to_run(paragraph, latex, is_display=True)
         elif part.startswith('$') and part.endswith('$'):
             # Unescape LaTeX inline math
             latex = html.unescape(part[1:-1])
