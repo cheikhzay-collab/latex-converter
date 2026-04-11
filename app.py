@@ -26,6 +26,14 @@ def init_db():
         c.execute('''CREATE TABLE IF NOT EXISTS stats (id INTEGER PRIMARY KEY, downloads INTEGER, chars INTEGER, unique_users INTEGER)''')
         c.execute('''CREATE TABLE IF NOT EXISTS daily_stats (date TEXT PRIMARY KEY, downloads INTEGER DEFAULT 0, chars INTEGER DEFAULT 0, unique_users INTEGER DEFAULT 0)''')
         c.execute('''CREATE TABLE IF NOT EXISTS users (visitor_id TEXT PRIMARY KEY, first_visit_date TEXT)''')
+        c.execute('''CREATE TABLE IF NOT EXISTS conversions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            visitor_id TEXT,
+            content TEXT,
+            char_count INTEGER,
+            is_rtl INTEGER
+        )''')
         conn.commit()
 
 init_db()
@@ -323,24 +331,53 @@ def convert():
     doc.save(file_stream)
     file_stream.seek(0)
     
-    # 6. Update Stats
+    # 6. Update Stats and History
+    visitor_id = request.cookies.get('visitor_id')
+    is_new_visitor = False
+    if not visitor_id:
+        visitor_id = str(uuid.uuid4())
+        is_new_visitor = True
+    
     try:
         chars_count = len(content)
         today = datetime.date.today().isoformat()
         with sqlite3.connect(DB_PATH) as conn:
             c = conn.cursor()
+            # Ensure today exists
             c.execute('INSERT OR IGNORE INTO daily_stats (date, downloads, chars, unique_users) VALUES (?, 0, 0, 0)', (today,))
+            
+            # Update base stats
             c.execute('UPDATE daily_stats SET downloads = downloads + 1, chars = chars + ? WHERE date = ?', (chars_count, today))
+            
+            # Log full conversion history
+            c.execute('''INSERT INTO conversions (visitor_id, content, char_count, is_rtl) 
+                         VALUES (?, ?, ?, ?)''', (visitor_id, content, chars_count, 1 if is_rtl else 0))
+            
+            # Handle unique users
+            # Logic: Check if this user (visitor_id) has converted anything TODAY yet
+            c.execute('SELECT id FROM conversions WHERE visitor_id = ? AND date(timestamp) = ? LIMIT 1', (visitor_id, today))
+            has_today = c.fetchone()
+            
+            # If this is their first conversion of the day (including the one we just inserted, 
+            # so we check if there's only 1 or if we just inserted the first one), increment unique_users.
+            # Actually, since we already inserted, we check if count == 1 for today.
+            c.execute('SELECT COUNT(*) FROM conversions WHERE visitor_id = ? AND date(timestamp) = ?', (visitor_id, today))
+            if c.fetchone()[0] == 1:
+                 c.execute('UPDATE daily_stats SET unique_users = unique_users + 1 WHERE date = ?', (today,))
+            
             conn.commit()
     except sqlite3.Error as e:
         print(f"Database error updating stats: {e}")
     
-    return send_file(
+    response = send_file(
         file_stream,
         as_attachment=True,
         download_name="converted.docx",
         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
+    # Set persistent cookie for 1 year
+    response.set_cookie('visitor_id', visitor_id, max_age=31536000)
+    return response
 
 def check_auth(username, password):
     return username == 'admin' and password == '123456'
@@ -372,19 +409,36 @@ def admin():
             if not totals or totals[0] is None:
                 totals = (0, 0, 0)
                 
-            # History
+            # History Charts
             c.execute('SELECT date, unique_users, downloads FROM daily_stats ORDER BY date DESC LIMIT 14')
             history = [{'date': row[0], 'users': row[1], 'downloads': row[2]} for row in c.fetchall()]
             history.reverse()
+
+            # Detailed conversion logs for the manager
+            c.execute('SELECT id, timestamp, content, char_count, is_rtl FROM conversions ORDER BY timestamp DESC LIMIT 50')
+            logs = []
+            for row in c.fetchall():
+                # Strip HTML but keep it readable for preview
+                preview = row[2][:100] + '...' if len(row[2]) > 100 else row[2]
+                logs.append({
+                    'id': row[0],
+                    'time': row[1],
+                    'content': row[2],
+                    'preview': preview,
+                    'chars': row[3],
+                    'rtl': row[4]
+                })
     except sqlite3.Error:
         totals = (0, 0, 0)
         history = []
+        logs = []
         
     return render_template('admin.html', stats={
         'users': totals[0],
         'downloads': totals[1],
         'chars': totals[2],
         'history': history,
+        'logs': logs,
         'today': datetime.date.today().isoformat()
     })
 

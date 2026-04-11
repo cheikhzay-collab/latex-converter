@@ -1,0 +1,181 @@
+Para 0:
+  Run: Soit 
+  Run:  la fonction numérique définie sur 
+  Run:  par :
+
+
+  Run: 
+
+1. Calculer 
+  Run: .
+
+2. Calculer 
+  Run: .
+
+3. Montrer que pour tout 
+  Run:  :
+
+
+  XML: <w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mo="http://schemas.microsoft.com/office/mac/office/2008/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:mv="urn:schemas-microsoft-com:mac:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape">
+  <w:r>
+    <w:t xml:space="preserve">Soit </w:t>
+  </w:r>
+  <m:oMath>
+    <m:r>
+      <m:t>g</m:t>
+    </m:r>
+  </m:oMath>
+  <w:r>
+    <w:t xml:space="preserve"> la fonction numérique définie sur </w:t>
+  </w:r>
+  <m:oMath>
+    <m:r>
+      <m:t>ℝ</m:t>
+    </m:r>
+  </m:oMath>
+  <w:r>
+    <w:t xml:space="preserve"> par :</w:t>
+    <w:br/>
+    <w:br/>
+  </w:r>
+  <m:oMath>
+    <m:r>
+      <m:t>g(x)=</m:t>
+    </m:r>
+    <m:rad>
+      <m:radPr>
+        <m:degHide m:val="on"/>
+      </m:radPr>
+      <m:deg/>
+      <m:e>
+        <m:sSup>
+          <m:e>
+            <m:r>
+              <m:t>x</m:t>
+            </m:r>
+          </m:e>
+          <m:sup>
+            <m:r>
+              <m:t>2</m:t>
+            </m:r>
+          </m:sup>
+        </m:sSup>
+        <m:r>
+          <m:t>+3</m:t>
+        </m:r>
+      </m:e>
+    </m:rad>
+    <m:r>
+      <m:t>−x</m:t>
+    </m:r>
+  </m:oMath>
+  <w:r>
+    <w:br/>
+    <w:br/>
+    <w:t xml:space="preserve">1. Calculer </w:t>
+  </w:r>
+  <m:oMath>
+    <m:sSub>
+      <m:e>
+        <m:r>
+          <m:t>lim</m:t>
+        </m:r>
+      </m:e>
+      <m:sub>
+        <m:r>
+          <m:t>x→−∞</m:t>
+        </m:r>
+      </m:sub>
+    </m:sSub>
+    <m:r>
+      <m:t>g(x)</m:t>
+    </m:r>
+  </m:oMath>
+  <w:r>
+    <w:t>.</w:t>
+    <w:br/>
+    <w:br/>
+    <w:t xml:space="preserve">2. Calculer </w:t>
+  </w:r>
+  <m:oMath>
+    <m:sSub>
+      <m:e>
+        <m:r>
+          <m:t>lim</m:t>
+        </m:r>
+      </m:e>
+      <m:sub>
+        <m:r>
+          <m:t>x→+∞</m:t>
+        </m:r>
+      </m:sub>
+    </m:sSub>
+    <m:r>
+      <m:t>g(x)</m:t>
+    </m:r>
+  </m:oMath>
+  <w:r>
+    <w:t>.</w:t>
+    <w:br/>
+    <w:br/>
+    <w:t xml:space="preserve">3. Montrer que pour tout </w:t>
+  </w:r>
+  <m:oMath>
+    <m:d>
+      <m:dPr>
+        <m:begChr m:val=""/>
+        <m:sepChr m:val=""/>
+        <m:endChr m:val="["/>
+      </m:dPr>
+      <m:e>
+        <m:r>
+          <m:t>x</m:t>
+        </m:r>
+        <m:r>
+          <m:t>∈</m:t>
+        </m:r>
+        <m:r>
+          <m:t>[</m:t>
+        </m:r>
+        <m:r>
+          <m:t>1</m:t>
+        </m:r>
+        <m:r>
+          <m:t>,</m:t>
+        </m:r>
+        <m:r>
+          <m:t>+</m:t>
+        </m:r>
+        <m:r>
+          <m:t>∞</m:t>
+        </m:r>
+      </m:e>
+    </m:d>
+  </m:oMath>
+  <w:r>
+    <w:t xml:space="preserve"> :</w:t>
+    <w:br/>
+    <w:br/>
+  </w:r>
+  <m:oMath>
+    <m:r>
+      <m:t>0&lt;g(x)≤</m:t>
+    </m:r>
+    <m:f>
+      <m:fPr>
+        <m:type m:val="bar"/>
+      </m:fPr>
+      <m:num>
+        <m:r>
+          <m:t>3</m:t>
+        </m:r>
+      </m:num>
+      <m:den>
+        <m:r>
+          <m:t>2x</m:t>
+        </m:r>
+      </m:den>
+    </m:f>
+  </m:oMath>
+</w:p>
+

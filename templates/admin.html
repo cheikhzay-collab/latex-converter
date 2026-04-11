@@ -226,6 +226,115 @@
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* --- Activity Table --- */
+        .table-container {
+            margin-top: 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem 2rem;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            animation: fadeIn 0.6s var(--ease) 0.6s both;
+        }
+        .activity-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1.5rem;
+        }
+        .activity-table th {
+            text-align: left;
+            padding: 1rem;
+            color: var(--text-tertiary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid var(--border);
+        }
+        .activity-table td {
+            padding: 1rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            transition: all 0.2s var(--ease);
+        }
+        .activity-table tr:last-child td { border-bottom: none; }
+        .activity-table tr:hover td { background: var(--surface-hover); color: white; cursor: pointer; }
+        
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            background: var(--border);
+            color: var(--text-tertiary);
+            display: inline-block;
+        }
+        .badge-rtl { background: hsla(335, 80%, 60%, 0.1); color: hsl(335, 80%, 60%); }
+        .badge-ltr { background: hsla(250, 85%, 62%, 0.1); color: var(--accent); }
+
+        .time-col { white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+        .preview-col { 
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Modal for full content */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.3s var(--ease);
+        }
+        .modal-overlay.open { display: flex; opacity: 1; }
+        .content-modal {
+            background: var(--surface-solid);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 800px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            transform: scale(0.95);
+            transition: transform 0.3s var(--ease);
+        }
+        .modal-overlay.open .content-modal { transform: scale(1); }
+        .modal-top {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title { font-weight: 800; font-size: 1.1rem; }
+        .modal-close {
+            background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 0.5rem; border-radius: 0.5rem;
+        }
+        .modal-close:hover { background: var(--surface-hover); color: white; }
+        .modal-close svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .modal-body { 
+            padding: 2rem; 
+            overflow-y: auto; 
+            white-space: pre-wrap; 
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 0.9rem; 
+            line-height: 1.6; 
+            color: var(--text-secondary);
+        }
+        .modal-body.rtl { direction: rtl; text-align: right; font-family: 'Cairo', sans-serif; }
     </style>
 </head>
 <body>
@@ -286,7 +395,61 @@
                 <canvas id="historyChart"></canvas>
             </div>
         </div>
+
+        <!-- Recent Conversions Section -->
+        <div class="table-container">
+            <div class="chart-header">
+                <div class="chart-title">Recent Conversions</div>
+                <div class="chart-subtitle">Detailed log for manager review (Latest 50)</div>
+            </div>
+            <table class="activity-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Content Preview</th>
+                        <th>Chars</th>
+                        <th>Mode</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in stats.logs %}
+                    <tr onclick='viewFullContent({{ log | tojson }})'>
+                        <td class="time-col">{{ log.time }}</td>
+                        <td class="preview-col">{{ log.preview }}</td>
+                        <td>{{ log.chars }}</td>
+                        <td>
+                            {% if log.rtl %}
+                            <span class="badge badge-rtl">Arabic (RTL)</span>
+                            {% else %}
+                            <span class="badge badge-ltr">English (LTR)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not stats.logs %}
+                    <tr>
+                        <td colspan="4" style="text-align:center; padding: 3rem; color: var(--text-tertiary);">No conversion history found yet.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </main>
+
+    <!-- Full Content Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+        <div class="content-modal" onclick="event.stopPropagation()">
+            <div class="modal-top">
+                <span class="modal-title">Conversion Details</span>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
 
     <script id="history-data" type="application/json">{{ stats.history | tojson }}</script>
     <script>
@@ -387,6 +550,31 @@
                     mode: 'index',
                 },
             }
+        });
+
+        // Modal Logic
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalBody = document.getElementById('modalBody');
+
+        function viewFullContent(log) {
+            modalBody.innerText = log.content;
+            if (log.rtl) {
+                modalBody.classList.add('rtl');
+            } else {
+                modalBody.classList.remove('rtl');
+            }
+            modalOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('open');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close on ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
         });
     </script>
 </body>
