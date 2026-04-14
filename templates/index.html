@@ -1493,7 +1493,9 @@ Supports:
         }
 
         function fillExample() {
-            const example = `# معادلة تكامل
+            let example = "";
+            if (rtlCheck.checked) {
+                example = `# معادلة تكامل
 
 إليك مثال على معادلة تكامل:
 
@@ -1511,6 +1513,26 @@ $$\\int_{a}^{b} x^2 \\, dx = \\frac{b^3 - a^3}{3}$$
 |----------|-------|
 | $a$ | 0 |
 | $b$ | 1 |`;
+            } else {
+                example = `# Integration Formula
+
+Here is an example equation:
+
+$$\\int_{a}^{b} x^2 \\, dx = \\frac{b^3 - a^3}{3}$$
+
+And an inline one: $E = mc^2$.
+
+## Properties
+
+- The function is **continuous** on $[a, b]$
+- The derivative: $f'(x) = 2x$
+- A table:
+
+| Variable | Value |
+|----------|-------|
+| $a$ | 0 |
+| $b$ | 1 |`;
+            }
 
             editor.value = example;
             currentContent = example;
