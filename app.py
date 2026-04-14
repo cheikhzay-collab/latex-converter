@@ -18,23 +18,29 @@ import lxml.html
 
 app = Flask(__name__)
 
-DB_PATH = 'stats.db'
+if os.environ.get('VERCEL_ENV') or os.environ.get('VERCEL'):
+    DB_PATH = '/tmp/stats.db'
+else:
+    DB_PATH = 'stats.db'
 
 def init_db():
-    with sqlite3.connect(DB_PATH) as conn:
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS stats (id INTEGER PRIMARY KEY, downloads INTEGER, chars INTEGER, unique_users INTEGER)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS daily_stats (date TEXT PRIMARY KEY, downloads INTEGER DEFAULT 0, chars INTEGER DEFAULT 0, unique_users INTEGER DEFAULT 0)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS users (visitor_id TEXT PRIMARY KEY, first_visit_date TEXT)''')
-        c.execute('''CREATE TABLE IF NOT EXISTS conversions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            visitor_id TEXT,
-            content TEXT,
-            char_count INTEGER,
-            is_rtl INTEGER
-        )''')
-        conn.commit()
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            c = conn.cursor()
+            c.execute('''CREATE TABLE IF NOT EXISTS stats (id INTEGER PRIMARY KEY, downloads INTEGER, chars INTEGER, unique_users INTEGER)''')
+            c.execute('''CREATE TABLE IF NOT EXISTS daily_stats (date TEXT PRIMARY KEY, downloads INTEGER DEFAULT 0, chars INTEGER DEFAULT 0, unique_users INTEGER DEFAULT 0)''')
+            c.execute('''CREATE TABLE IF NOT EXISTS users (visitor_id TEXT PRIMARY KEY, first_visit_date TEXT)''')
+            c.execute('''CREATE TABLE IF NOT EXISTS conversions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                visitor_id TEXT,
+                content TEXT,
+                char_count INTEGER,
+                is_rtl INTEGER
+            )''')
+            conn.commit()
+    except Exception as e:
+        print(f"Failed to initialize database: {e}")
 
 init_db()
 
