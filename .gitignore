@@ -3,3 +3,9 @@ __pycache__/
 *.docx
 *.pyc
 .env
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
